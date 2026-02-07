@@ -10,3 +10,5 @@ logs/
 data/raw/
 data/processed/
 .DS_Store
+data/internal_data.db
+reports/

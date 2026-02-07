@@ -5,6 +5,9 @@ pipeline:
   name: "daily_sync"
   retry_attempts: 3
 
+storage:
+  database_path: "data/internal_data.db"
+
 alpha_vantage:
   api_key: "YOUR_ALPHA_VANTAGE_API_KEY"
   base_url: "https://www.alphavantage.co/query"
