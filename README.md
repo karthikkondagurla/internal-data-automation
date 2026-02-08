@@ -1,136 +1,45 @@
 # Internal Data Automation
 
-![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
+**A production-grade ETL pipeline for financial market data ingestion, processing, and reporting.**
 
-## Overview
-The **Internal Data Automation** project is a production-grade ETL (Extract, Transform, Load) pipeline designed to ingest, process, store, and report on financial market data and related news.
+---
 
-It is built with:
-- **Reliability**: Exponential backoff retries, strict validation, and audit logging.
-- **Portability**: Fully containerized with Docker.
-- **Cloud-Native**: Integrated with AWS S3 and CloudWatch for production observability.
-- **Automation**: Ready for cron-based scheduling.
+## 📖 About
 
-## Architecture
-The pipeline consists of four distinct stages:
+The **Internal Data Automation** system is a robust Python-based pipeline designed to automate the daily workflow of validatng, ingesting, cleaning, and storing financial data. It is built with a focus on reliability, observability, and security, making it suitable for enterprise-grade deployment on AWS.
 
-1.  **Ingestion**: Fetches raw JSON data from external providers.
-2.  **Processing**: Cleanses, normalizes, and extracts relevant fields from the raw data.
-3.  **Storage**: Persists the structured data into a SQLite database.
-4.  **Reporting**: Generates summary text reports and CSV exports of the collected data.
+## ✨ Key Features
 
-```mermaid
-graph LR
-    A[Alpha Vantage / NewsAPI] -->|Ingestion| B(Raw JSON)
-    B -->|Processing| C(Cleaned Data)
-    C -->|Storage| D[(SQLite DB)]
-    D -->|Reporting| E(Reports & CSVs)
+- **🛡️ Production-Ready**: Enforces strict validation, immutable infrastructure patterns, and fail-safe execution.
+- **🐳 Containerized**: Fully dockerized application ensuring consistency across Dev, Test, and Prod environments.
+- **☁️ Cloud-Native**:
+  - **S3 Integration**: Automated archiving of reports and raw data.
+  - **CloudWatch Logs**: Real-time log streaming for production auditing.
+- **🔄 Automated**: Includes scripts for idempotent execution and Cron scheduling.
+- **🔒 Secure**: Zero-trust credential management via environment variables.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.11+ (for local development)
+- AWS Account (for production features)
+
+### 1. Configuration
+Create a `.env` file in the root directory:
+```bash
+ALPHA_VANTAGE_API_KEY="your_key"
+NEWS_API_KEY="your_key"
 ```
 
-## Folder Structure
-```text
-internal-data-automation/
-├── config.yaml             # Configuration and API keys
-├── requirements.txt        # Python dependencies
-├── run_pipeline.py         # Main entry point (CLI)
-├── reports/                # Generated reports
-├── logs/                   # Pipeline execution logs
-├── data/
-│   ├── raw/                # Raw API responses
-│   └── internal_data.db    # SQLite database
-└── internal_data_automation/
-    ├── ingestion/          # Data fetching modules
-    ├── processing/         # Data cleaning modules
-    ├── storage/            # Database operations
-    └── reporting/          # Report generation
-```
-
-## Setup Instructions
-
-1.  **Prerequisites**: Python 3.8+ installed.
-2.  **Clone the Repository**:
-    ```bash
-    git clone <repository-url>
-    cd internal-data-automation
-    ```
-3.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-## Configuration
-Create a `.env` file in the project root to set your API keys:
+### 2. Run with Docker (Recommended)
+Build and run the container in one go:
 
 ```bash
-ALPHA_VANTAGE_API_KEY="your_actual_key"
-NEWS_API_KEY="your_actual_key"
-```
-
-The pipeline will automatically load these environment variables. `config.yaml` handles other settings like retries and timeouts.
-
-## Usage
-
-The pipeline is executed via `run_pipeline.py`. It supports command-line arguments for flexibility.
-
-### Standard Run (Daily Sync)
-Runs the full pipeline for the current date.
-```bash
-python run_pipeline.py
-```
-
-### Run for a Specific Date
-Fetches and processes data for a historical date.
-```bash
-python run_pipeline.py --date 2026-02-01
-```
-
-### Partial Runs
-You can skip specific stages using flags:
-```bash
-# Skip ingestion (e.g., if re-processing existing raw data)
-python run_pipeline.py --skip-ingestion
-
-# Skip reporting (e.g., just ingesting and storing)
-python run_pipeline.py --skip-reporting
-```
-
-Available flags:
-- `--skip-ingestion`
-- `--skip-processing`
-- `--skip-storage`
-- `--skip-reporting`
-
-## Outputs
-- **Logs**: 
-  - Local: `logs/pipeline.log`
-  - AWS CloudWatch: `/internal-data-automation/pipeline` (Production only)
-- **Reports**: 
-  - Local: `reports/summary_{date}.txt`, `reports/market_data_{date}.csv`
-  - AWS S3: `s3://<bucket>/internal-data-automation/<date>/` (Production only)
-
-## Features
-- **Fail-Fast Validation**: Prevents runs with invalid configurations.
-- **Idempotency**: Locking mechanism prevents overlapping runs in production.
-- **Audit Trails**: Every execution is recorded in the `pipeline_runs` database table.
-- **Secure**: Secrets are managed via environment variables; no hardcoded credentials.
-
-## Running with Docker
-
-You can run the pipeline in a Docker container to ensure a consistent environment.
-
-### 1. Build the Image
-```bash
+# Build
 docker build -t internal-data-automation .
-```
 
-### 2. Run the Container
-You need to pass your API keys as environment variables. You can do this using the `--env-file` flag with your local `.env` file.
-
-To PERSIST data (database, reports, logs), you must mount volumes:
-
-```bash
+# Run (Mounts local volumes for data persistence)
 docker run --rm \
   --env-file .env \
   -v "$(pwd)/data:/app/data" \
@@ -139,29 +48,47 @@ docker run --rm \
   internal-data-automation
 ```
 
-**Note for Windows (PowerShell):**
-Replace `$(pwd)` with `${PWD}`:
-
-```powershell
-docker run --rm `
-  --env-file .env `
-  -v "${PWD}/data:/app/data" `
-  -v "${PWD}/reports:/app/reports" `
-  -v "${PWD}/logs:/app/logs" `
-  internal-data-automation
-```
-
-### 3. Override Command
-To run with specific flags (e.g., skip ingestion):
-
+### 3. Run Locally
 ```bash
-docker run --rm --env-file .env ... internal-data-automation python run_pipeline.py --skip-ingestion
+pip install -r requirements.txt
+python run_pipeline.py
 ```
 
-## Deployment
-For detailed instructions on deploying this project to AWS EC2, please refer to [deployment_guide.md](deployment_guide.md).
+## 🏗️ Architecture
 
-## Future Improvements
-- Add email notifications for report delivery.
-- Migrate storage to PostgreSQL for scale.
-- Implement dashboarding (e.g., Streamlit) on top of the database.
+```mermaid
+flowchart LR
+    Sources[External APIs] -->|Ingest| Raw(Raw JSON)
+    Raw -->|Process| Clean(Cleaned Objects)
+    Clean -->|Store| DB[(SQLite/RDS)]
+    DB -->|Report| Output[CSV & Summary]
+    
+    subgraph Production Pipeline
+    Output -->|Archive| S3(AWS S3)
+    Logs -->|Stream| BW(CloudWatch)
+    end
+```
+
+## 📂 Project Structure
+
+```text
+├── config.yaml             # App configuration (timeouts, paths)
+├── deployment_guide.md     # 📘 AWS EC2 Deployment Guide
+├── scheduling.md           # ⏲️ Cron Scheduling Guide
+├── Dockerfile              # Production Docker image definition
+├── run_pipeline.py         # Main execution entry point
+├── scripts/                # Operational scripts (e.g., cron wrappers)
+└── internal_data_automation/
+    ├── ingestion/          # API Clients with retry logic
+    ├── processing/         # Data cleaning & normalization
+    ├── storage/            # Database abstraction
+    └── reporting/          # Report generation logic
+```
+
+## 📚 Documentation
+
+- **[Deployment Guide](deployment_guide.md)**: Step-by-step instructions for deploying to AWS EC2.
+- **[Scheduling Guide](scheduling.md)**: How to set up automated daily runs.
+
+---
+*Internally maintained by the Data Engineering Team.*
