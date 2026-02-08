@@ -91,4 +91,4 @@ flowchart LR
 - **[Scheduling Guide](scheduling.md)**: How to set up automated daily runs.
 
 ---
-*Internally maintained by the Data Engineering Team.*
+
