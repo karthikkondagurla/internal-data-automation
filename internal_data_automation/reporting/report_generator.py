@@ -3,10 +3,10 @@ import sqlite3
 import csv
 import os
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 from datetime import datetime
 
-def generate_reports(config: Dict[str, Any], logger: logging.Logger, date_str: str) -> None:
+def generate_reports(config: Dict[str, Any], logger: logging.Logger, date_str: str) -> List[str]:
     """
     Generates summary and export reports from the database.
 
@@ -77,3 +77,5 @@ def generate_reports(config: Dict[str, Any], logger: logging.Logger, date_str: s
         logger.error(f"IO error during reporting: {e}")
     except Exception as e:
         logger.error(f"Unexpected error during reporting: {e}")
+        
+    return [summary_file, csv_file] if 'summary_file' in locals() and 'csv_file' in locals() else []

@@ -56,6 +56,17 @@ class Database:
                 ingested_at TEXT,
                 UNIQUE(url)
             )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS pipeline_runs (
+                run_id TEXT PRIMARY KEY,
+                run_date TEXT,
+                mode TEXT,
+                status TEXT,
+                started_at TEXT,
+                finished_at TEXT,
+                error_message TEXT
+            )
             """
         ]
         
@@ -145,3 +156,44 @@ class Database:
                 self.logger.info(f"Inserted {cursor.rowcount} news records.")
         except sqlite3.Error as e:
             self.logger.error(f"Failed to insert news data: {e}")
+
+    def start_pipeline_run(self, run_id: str, run_date: str, mode: str, started_at: str):
+        """记录 pipeline 开始"""
+        query = """
+        INSERT INTO pipeline_runs (run_id, run_date, mode, status, started_at)
+        VALUES (?, ?, ?, ?, ?)
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.execute(query, (run_id, run_date, mode, "STARTED", started_at))
+                conn.commit()
+        except sqlite3.Error as e:
+            self.logger.error(f"Failed to record pipeline start: {e}")
+
+    def mark_pipeline_success(self, run_id: str, finished_at: str):
+        """标记 pipeline 成功"""
+        query = """
+        UPDATE pipeline_runs 
+        SET status = ?, finished_at = ?
+        WHERE run_id = ?
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.execute(query, ("SUCCESS", finished_at, run_id))
+                conn.commit()
+        except sqlite3.Error as e:
+            self.logger.error(f"Failed to record pipeline success: {e}")
+
+    def mark_pipeline_failure(self, run_id: str, finished_at: str, error_message: str):
+        """标记 pipeline 失败"""
+        query = """
+        UPDATE pipeline_runs 
+        SET status = ?, finished_at = ?, error_message = ?
+        WHERE run_id = ?
+        """
+        try:
+            with self._get_connection() as conn:
+                conn.execute(query, ("FAILED", finished_at, error_message, run_id))
+                conn.commit()
+        except sqlite3.Error as e:
+            self.logger.error(f"Failed to record pipeline failure: {e}")

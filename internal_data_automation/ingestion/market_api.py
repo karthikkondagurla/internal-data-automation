@@ -4,6 +4,7 @@ import json
 import os
 import logging
 from typing import Dict, Any
+from internal_data_automation.utils.api_client import fetch_with_retries
 
 def fetch_market_data(config: Dict[str, Any], logger: logging.Logger, date_str: str) -> None:
     """
@@ -15,13 +16,16 @@ def fetch_market_data(config: Dict[str, Any], logger: logging.Logger, date_str: 
         date_str: Current date string (YYYY-MM-DD).
     """
     alpha_config = config.get("alpha_vantage", {})
-    api_key = alpha_config.get("api_key")
+    # Get API key from environment variable
+    api_key = os.environ.get("ALPHA_VANTAGE_API_KEY")
     base_url = alpha_config.get("base_url")
     symbol = alpha_config.get("symbol", "SPY")
 
-    if not api_key or api_key == "YOUR_ALPHA_VANTAGE_API_KEY":
-        logger.warning("Alpha Vantage API key not configured. Skipping market data ingestion.")
+    if not api_key:
+        logger.warning("ALPHA_VANTAGE_API_KEY not found in environment. Skipping market data ingestion.")
         return
+    else:
+        logger.info("Alpha Vantage API key loaded from environment.")
 
     params = {
         "function": "TIME_SERIES_DAILY",
@@ -31,9 +35,8 @@ def fetch_market_data(config: Dict[str, Any], logger: logging.Logger, date_str: 
 
     try:
         logger.info(f"Fetching market data for {symbol}...")
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()
-
+        response = fetch_with_retries(base_url, params, config, logger)
+        
         data = response.json()
 
         # Check if API returned an error message or rate limit note

@@ -1,20 +1,33 @@
 app_name: "Internal Data Automation"
 version: "1.0.0"
 log_level: "INFO"
+app:
+  mode: "development" # Options: development, production
 pipeline:
   name: "daily_sync"
   retry_attempts: 3
+
+api:
+  timeout_seconds: 10
+  max_retries: 3
+  backoff_base_seconds: 1
+
+aws:
+  s3_bucket_name: "your-bucket-name"
+  s3_prefix: "internal-data-automation"
+  cloudwatch_log_group: "/internal-data-automation/pipeline"
+  cloudwatch_log_stream_prefix: "pipeline-run"
 
 storage:
   database_path: "data/internal_data.db"
 
 alpha_vantage:
-  api_key: "YOUR_ALPHA_VANTAGE_API_KEY"
+  # api_key must be set via env var: ALPHA_VANTAGE_API_KEY
   base_url: "https://www.alphavantage.co/query"
   symbol: "SPY"
 
 news_api:
-  api_key: "YOUR_NEWS_API_KEY"
+  # api_key must be set via env var: NEWS_API_KEY
   base_url: "https://newsapi.org/v2/everything"
   query: "finance"
   language: "en"

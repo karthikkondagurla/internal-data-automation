@@ -51,15 +51,14 @@ internal-data-automation/
     ```
 
 ## Configuration
-Edit `config.yaml` to include your API keys:
+Create a `.env` file in the project root to set your API keys:
 
-```yaml
-alpha_vantage:
-  api_key: "YOUR_ACTUAL_API_KEY"
-  
-news_api:
-  api_key: "YOUR_ACTUAL_API_KEY"
+```bash
+ALPHA_VANTAGE_API_KEY="your_actual_key"
+NEWS_API_KEY="your_actual_key"
 ```
+
+The pipeline will automatically load these environment variables. `config.yaml` handles other settings like retries and timeouts.
 
 ## Usage
 
@@ -98,6 +97,51 @@ Available flags:
 - **Reports**: 
   - `reports/summary_{date}.txt`: Daily summary of records processed.
   - `reports/market_data_{date}.csv`: Export of market data.
+
+## Running with Docker
+
+You can run the pipeline in a Docker container to ensure a consistent environment.
+
+### 1. Build the Image
+```bash
+docker build -t internal-data-automation .
+```
+
+### 2. Run the Container
+You need to pass your API keys as environment variables. You can do this using the `--env-file` flag with your local `.env` file.
+
+To PERSIST data (database, reports, logs), you must mount volumes:
+
+```bash
+docker run --rm \
+  --env-file .env \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/reports:/app/reports" \
+  -v "$(pwd)/logs:/app/logs" \
+  internal-data-automation
+```
+
+**Note for Windows (PowerShell):**
+Replace `$(pwd)` with `${PWD}`:
+
+```powershell
+docker run --rm `
+  --env-file .env `
+  -v "${PWD}/data:/app/data" `
+  -v "${PWD}/reports:/app/reports" `
+  -v "${PWD}/logs:/app/logs" `
+  internal-data-automation
+```
+
+### 3. Override Command
+To run with specific flags (e.g., skip ingestion):
+
+```bash
+docker run --rm --env-file .env ... internal-data-automation python run_pipeline.py --skip-ingestion
+```
+
+## Deployment
+For detailed instructions on deploying this project to AWS EC2, please refer to [deployment_guide.md](deployment_guide.md).
 
 ## Future Improvements
 - Add email notifications for report delivery.

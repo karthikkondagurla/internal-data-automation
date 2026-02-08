@@ -4,6 +4,7 @@ import json
 import os
 import logging
 from typing import Dict, Any
+from internal_data_automation.utils.api_client import fetch_with_retries
 
 def fetch_news_data(config: Dict[str, Any], logger: logging.Logger, date_str: str) -> None:
     """
@@ -15,14 +16,17 @@ def fetch_news_data(config: Dict[str, Any], logger: logging.Logger, date_str: st
         date_str: Current date string (YYYY-MM-DD).
     """
     news_config = config.get("news_api", {})
-    api_key = news_config.get("api_key")
+    # Get API key from environment variable
+    api_key = os.environ.get("NEWS_API_KEY")
     base_url = news_config.get("base_url")
     query = news_config.get("query", "finance")
     language = news_config.get("language", "en")
 
-    if not api_key or api_key == "YOUR_NEWS_API_KEY":
-        logger.warning("NewsAPI key not configured. Skipping news data ingestion.")
+    if not api_key:
+        logger.warning("NEWS_API_KEY not found in environment. Skipping news data ingestion.")
         return
+    else:
+        logger.info("NewsAPI key loaded from environment.")
 
     params = {
         "q": query,
@@ -34,9 +38,8 @@ def fetch_news_data(config: Dict[str, Any], logger: logging.Logger, date_str: st
 
     try:
         logger.info(f"Fetching news data for '{query}'...")
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()
-
+        response = fetch_with_retries(base_url, params, config, logger)
+        
         data = response.json()
 
         if data.get("status") != "ok":
