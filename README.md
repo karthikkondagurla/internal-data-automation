@@ -1,7 +1,17 @@
 # Internal Data Automation
 
+![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
+
 ## Overview
-The **Internal Data Automation** project is a comprehensive ETL (Extract, Transform, Load) pipeline designed to ingest, process, store, and report on financial market data and related news. It automates the daily workflow of fetching data from external APIs (Alpha Vantage, NewsAPI), cleaning it for analysis, persisting it in a local database, and generating daily summaries.
+The **Internal Data Automation** project is a production-grade ETL (Extract, Transform, Load) pipeline designed to ingest, process, store, and report on financial market data and related news.
+
+It is built with:
+- **Reliability**: Exponential backoff retries, strict validation, and audit logging.
+- **Portability**: Fully containerized with Docker.
+- **Cloud-Native**: Integrated with AWS S3 and CloudWatch for production observability.
+- **Automation**: Ready for cron-based scheduling.
 
 ## Architecture
 The pipeline consists of four distinct stages:
@@ -93,10 +103,18 @@ Available flags:
 - `--skip-reporting`
 
 ## Outputs
-- **Logs**: `logs/pipeline.log` contains detailed execution logs.
+- **Logs**: 
+  - Local: `logs/pipeline.log`
+  - AWS CloudWatch: `/internal-data-automation/pipeline` (Production only)
 - **Reports**: 
-  - `reports/summary_{date}.txt`: Daily summary of records processed.
-  - `reports/market_data_{date}.csv`: Export of market data.
+  - Local: `reports/summary_{date}.txt`, `reports/market_data_{date}.csv`
+  - AWS S3: `s3://<bucket>/internal-data-automation/<date>/` (Production only)
+
+## Features
+- **Fail-Fast Validation**: Prevents runs with invalid configurations.
+- **Idempotency**: Locking mechanism prevents overlapping runs in production.
+- **Audit Trails**: Every execution is recorded in the `pipeline_runs` database table.
+- **Secure**: Secrets are managed via environment variables; no hardcoded credentials.
 
 ## Running with Docker
 
